@@ -1,0 +1,194 @@
+/* WRC Rally Animation System */
+
+:root {
+  --wrc-duration-instant: 100ms;
+  --wrc-duration-fast: 150ms;
+  --wrc-duration-normal: 250ms;
+  --wrc-duration-slow: 400ms;
+  --wrc-duration-slower: 600ms;
+
+  --wrc-easing-standard: cubic-bezier(0.4, 0.0, 0.2, 1);
+  --wrc-easing-rally: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --wrc-easing-acceleration: cubic-bezier(0.4, 0.0, 1, 1);
+  --wrc-easing-deceleration: cubic-bezier(0.0, 0.0, 0.2, 1);
+  --wrc-easing-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+  --wrc-glow-blue: rgba(0, 48, 135, 0.3);
+  --wrc-glow-red: rgba(228, 0, 43, 0.3);
+  --wrc-glow-white: rgba(255, 255, 255, 0.1);
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .wrc-background::before,
+  .wrc-background::after,
+  .gravel-line,
+  .radial-pulse,
+  .corner-accent,
+  .grid-overlay {
+    animation: none !important;
+  }
+}
+
+/* Focus states */
+*:focus { outline: none; }
+*:focus-visible {
+  outline: 2px solid var(--color-wrc-blue);
+  outline-offset: 2px;
+  transition: outline-offset var(--wrc-duration-fast) var(--wrc-easing-standard);
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+[role="button"]:focus-visible {
+  outline: 2px solid var(--color-wrc-blue);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 4px rgba(0, 48, 135, 0.1);
+}
+
+/* Table row animations */
+.table-row-interactive {
+  position: relative;
+  transition: all var(--wrc-duration-normal) var(--wrc-easing-standard);
+  cursor: pointer;
+}
+
+.table-row-interactive::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 3px;
+  background: var(--color-wrc-blue);
+  transform: scaleY(0);
+  transition: transform var(--wrc-duration-fast) var(--wrc-easing-rally);
+  transform-origin: center;
+}
+
+.table-row-interactive:hover {
+  background: rgba(255, 255, 255, 0.1);
+  transform: translateX(4px);
+}
+
+.table-row-interactive:hover::before {
+  transform: scaleY(1);
+}
+
+/* Button animations */
+.btn-wrc {
+  position: relative;
+  overflow: hidden;
+  transition: all var(--wrc-duration-normal) var(--wrc-easing-standard);
+}
+
+.btn-wrc:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 48, 135, 0.3);
+}
+
+.btn-wrc:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 8px rgba(0, 48, 135, 0.2);
+}
+
+/* Card animations */
+.card-wrc {
+  transition: all var(--wrc-duration-normal) var(--wrc-easing-standard);
+}
+
+.card-wrc:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3),
+              0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+@keyframes cardEnter {
+  from { opacity: 0; transform: translateY(30px) scale(0.95); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.card-enter { animation: cardEnter var(--wrc-duration-slow) var(--wrc-easing-rally); }
+
+/* Loading shimmer */
+@keyframes rallyShimmer {
+  0% { transform: translateX(-100%) rotate(-45deg); }
+  100% { transform: translateX(200%) rotate(-45deg); }
+}
+
+.loading-shimmer {
+  position: relative;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.loading-shimmer::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(0, 48, 135, 0.1) 30%,
+    rgba(255, 255, 255, 0.2) 50%,
+    rgba(0, 48, 135, 0.1) 70%,
+    transparent
+  );
+  animation: rallyShimmer 2s infinite;
+}
+
+.skeleton-pulse { animation: skeletonPulse 1.5s ease-in-out infinite; }
+@keyframes skeletonPulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+/* Stagger animations */
+.stagger-item {
+  opacity: 0;
+  animation: fadeInUp var(--wrc-duration-normal) var(--wrc-easing-rally) forwards;
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.stagger-item:nth-child(1) { animation-delay: 0ms; }
+.stagger-item:nth-child(2) { animation-delay: 50ms; }
+.stagger-item:nth-child(3) { animation-delay: 100ms; }
+.stagger-item:nth-child(4) { animation-delay: 150ms; }
+.stagger-item:nth-child(5) { animation-delay: 200ms; }
+.stagger-item:nth-child(6) { animation-delay: 250ms; }
+.stagger-item:nth-child(7) { animation-delay: 300ms; }
+.stagger-item:nth-child(8) { animation-delay: 350ms; }
+.stagger-item:nth-child(9) { animation-delay: 400ms; }
+.stagger-item:nth-child(10) { animation-delay: 450ms; }
+
+/* Glow effects */
+.glow-blue {
+  transition: box-shadow var(--wrc-duration-normal) var(--wrc-easing-standard);
+}
+.glow-blue:hover {
+  box-shadow: 0 0 20px var(--wrc-glow-blue), 0 0 40px var(--wrc-glow-blue);
+}
+
+/* Modal animations */
+@keyframes backdropFadeIn {
+  from { opacity: 0; backdrop-filter: blur(0); }
+  to { opacity: 1; backdrop-filter: blur(4px); }
+}
+@keyframes backdropFadeOut {
+  from { opacity: 1; backdrop-filter: blur(4px); }
+  to { opacity: 0; backdrop-filter: blur(0); }
+}
+.modal-backdrop-enter { animation: backdropFadeIn var(--wrc-duration-normal) var(--wrc-easing-standard) forwards; }
+.modal-backdrop-exit { animation: backdropFadeOut var(--wrc-duration-normal) var(--wrc-easing-standard) forwards; }

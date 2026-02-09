@@ -1,0 +1,185 @@
+@import "tailwindcss";
+@import "./animations.css";
+
+@theme {
+  --color-wrc-blue: #003087;
+  --color-wrc-red: #E4002B;
+  --color-wrc-dark: #0F1923;
+}
+
+/* Utility Classes */
+.bg-gradient-radial {
+  background: radial-gradient(circle at center, var(--tw-gradient-stops));
+}
+
+/* WRC Animated Background */
+.wrc-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  overflow: hidden;
+  background: linear-gradient(135deg, #0F1923 0%, #121f2e 50%, #0F1923 100%);
+}
+
+/* Moving diagonal stripes */
+.wrc-background::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background-image:
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 100px,
+      rgba(0, 48, 135, 0.04) 100px,
+      rgba(0, 48, 135, 0.04) 200px
+    );
+  animation: moveStripes 60s linear infinite;
+}
+
+/* Moving rally lines */
+.wrc-background::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image:
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 300px,
+      rgba(255, 255, 255, 0.02) 300px,
+      rgba(255, 255, 255, 0.02) 302px
+    );
+  animation: moveLines 40s linear infinite;
+}
+
+/* Floating gravel elements */
+.gravel-line {
+  position: absolute;
+  background: linear-gradient(90deg, transparent, rgba(0, 48, 135, 0.1), transparent);
+  width: 100%;
+  height: 2px;
+  animation: floatUp 15s linear infinite;
+  opacity: 0;
+}
+
+.gravel-line:nth-child(1) {
+  top: 20%;
+  animation-delay: 0s;
+  animation-duration: 20s;
+}
+
+.gravel-line:nth-child(2) {
+  top: 40%;
+  animation-delay: 5s;
+  animation-duration: 25s;
+}
+
+.gravel-line:nth-child(3) {
+  top: 60%;
+  animation-delay: 10s;
+  animation-duration: 18s;
+}
+
+.gravel-line:nth-child(4) {
+  top: 80%;
+  animation-delay: 15s;
+  animation-duration: 22s;
+}
+
+/* Radial gradient pulse */
+.radial-pulse {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 120%;
+  height: 120%;
+  background: radial-gradient(
+    circle at center,
+    rgba(0, 48, 135, 0.05) 0%,
+    transparent 70%
+  );
+  animation: pulse 8s ease-in-out infinite;
+}
+
+/* Corner accent lines */
+.corner-accent {
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  border: 1px solid rgba(0, 48, 135, 0.1);
+  opacity: 0.5;
+}
+
+.corner-accent.top-left {
+  top: -150px;
+  left: -150px;
+  border-radius: 0 0 100% 0;
+  animation: rotateAccent 30s linear infinite;
+}
+
+.corner-accent.bottom-right {
+  bottom: -150px;
+  right: -150px;
+  border-radius: 100% 0 0 0;
+  animation: rotateAccent 30s linear infinite reverse;
+}
+
+/* Grid pattern overlay */
+.grid-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.01) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.01) 1px, transparent 1px);
+  background-size: 50px 50px;
+  animation: gridMove 20s linear infinite;
+  opacity: 0.3;
+}
+
+/* Animations */
+@keyframes moveStripes {
+  0% { transform: translate(0, 0); }
+  100% { transform: translate(-100px, 100px); }
+}
+
+@keyframes moveLines {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-300px); }
+}
+
+@keyframes floatUp {
+  0% { transform: translateY(0) scaleX(0); opacity: 0; }
+  10% { opacity: 0.3; }
+  50% { transform: translateY(-50vh) scaleX(1); opacity: 0.5; }
+  90% { opacity: 0.3; }
+  100% { transform: translateY(-100vh) scaleX(0); opacity: 0; }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.3; transform: translate(-50%, -50%) scale(1); }
+  50% { opacity: 0.6; transform: translate(-50%, -50%) scale(1.1); }
+}
+
+@keyframes rotateAccent {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes gridMove {
+  0% { background-position: 0 0; }
+  100% { background-position: 50px 50px; }
+}

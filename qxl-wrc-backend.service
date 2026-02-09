@@ -1,0 +1,18 @@
+[Unit]
+Description=QXL WRC Rally Backend API
+After=network.target
+
+[Service]
+Type=simple
+User=qxl
+WorkingDirectory=/home/qxl/projects/qxl-wrc/backend
+Environment=NODE_ENV=production
+ExecStart=/usr/bin/node dist/server.js
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=qxl-wrc-backend
+
+[Install]
+WantedBy=multi-user.target

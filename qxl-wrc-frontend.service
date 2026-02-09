@@ -1,0 +1,19 @@
+[Unit]
+Description=QXL WRC Rally Frontend Next.js Server
+After=network.target
+
+[Service]
+Type=simple
+User=qxl
+WorkingDirectory=/home/qxl/projects/qxl-wrc/frontend
+Environment=NODE_ENV=production
+Environment=PORT=3010
+ExecStart=/usr/bin/npm start
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=qxl-wrc-frontend
+
+[Install]
+WantedBy=multi-user.target
