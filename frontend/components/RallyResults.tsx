@@ -31,6 +31,8 @@ interface Stage {
   distance_km: number | null;
   is_power_stage: boolean;
   leg: number | null;
+  stage_date: string | null;
+  start_time: string | null;
 }
 
 interface StageResult {
@@ -73,6 +75,66 @@ function getFlag(country: string): string {
     .split('')
     .map((c) => String.fromCodePoint(c.charCodeAt(0) + 127397))
     .join('');
+}
+
+const COUNTRY_TO_TIMEZONE: Record<string, string> = {
+  'Monaco': 'Europe/Monaco', 'Sweden': 'Europe/Stockholm', 'Kenya': 'Africa/Nairobi',
+  'Croatia': 'Europe/Zagreb', 'Spain': 'Atlantic/Canary', 'Portugal': 'Europe/Lisbon',
+  'Italy': 'Europe/Rome', 'Greece': 'Europe/Athens', 'Estonia': 'Europe/Tallinn',
+  'Finland': 'Europe/Helsinki', 'Japan': 'Asia/Tokyo', 'Paraguay': 'America/Asuncion',
+  'Chile': 'America/Santiago', 'Saudi Arabia': 'Asia/Riyadh', 'Czech Republic': 'Europe/Prague',
+  'Mexico': 'America/Mexico_City', 'New Zealand': 'Pacific/Auckland',
+  'Australia': 'Australia/Sydney', 'Argentina': 'America/Buenos_Aires',
+};
+
+function formatStageDateTime(stage: Stage, rallyCountry: string): { date: string; ukTime: string } | null {
+  if (!stage.stage_date || !stage.start_time) return null;
+
+  const dateStr = stage.stage_date.split('T')[0]; // "2026-02-12"
+  const [hh, mm] = stage.start_time.split(':');
+
+  // Build a Date in the rally's local timezone
+  const rallyTz = COUNTRY_TO_TIMEZONE[rallyCountry];
+  if (!rallyTz) {
+    // Fallback: show local time as-is with note
+    const d = new Date(dateStr + 'T00:00:00');
+    return {
+      date: d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }),
+      ukTime: `${hh}:${mm} local`,
+    };
+  }
+
+  // Create date string in rally timezone, then convert to UK
+  const localDatetime = `${dateStr}T${hh}:${mm}:00`;
+
+  // Use Intl to find the UTC offset of the rally timezone on that date
+  const formatter = new Intl.DateTimeFormat('en-GB', {
+    timeZone: rallyTz,
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+    hour12: false,
+  });
+
+  // Parse by creating a UTC date and checking what time it shows in the rally TZ
+  // Instead, use a simpler approach: create a date assuming UTC, find what that date
+  // looks like in rally TZ, compute offset, then apply to get real UTC
+  const utcGuess = new Date(localDatetime + 'Z');
+  const inRallyTz = new Date(utcGuess.toLocaleString('en-US', { timeZone: rallyTz }));
+  const offsetMs = inRallyTz.getTime() - utcGuess.getTime();
+  const realUtc = new Date(utcGuess.getTime() - offsetMs);
+
+  // Format in UK timezone
+  const ukTimeStr = realUtc.toLocaleString('en-GB', {
+    timeZone: 'Europe/London',
+    hour: '2-digit', minute: '2-digit',
+    hour12: false,
+  });
+  const ukDateStr = realUtc.toLocaleDateString('en-GB', {
+    timeZone: 'Europe/London',
+    weekday: 'short', day: 'numeric', month: 'short',
+  });
+
+  return { date: ukDateStr, ukTime: ukTimeStr };
 }
 
 interface RallyResultsProps {
@@ -233,26 +295,36 @@ export default function RallyResults({ rally, isOpen, onClose }: RallyResultsPro
               <div className="space-y-4">
                 {/* Stage list */}
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-                  {stages.map((stage) => (
-                    <button
-                      key={stage.id}
-                      onClick={() => handleStageSelect(stage)}
-                      className={`p-3 rounded-lg text-left transition-all ${
-                        selectedStage?.id === stage.id
-                          ? 'bg-wrc-blue text-white border border-wrc-blue'
-                          : 'bg-white/5 text-white/70 border border-white/10 hover:bg-white/10'
-                      }`}
-                    >
-                      <div className="font-semibold text-sm">
-                        SS{stage.stage_number}
-                        {stage.is_power_stage && ' ⚡'}
-                      </div>
-                      <div className="text-xs opacity-60 truncate">{stage.name}</div>
-                      {stage.distance_km && (
-                        <div className="text-xs opacity-40">{stage.distance_km} km</div>
-                      )}
-                    </button>
-                  ))}
+                  {stages.map((stage) => {
+                    const dt = rally ? formatStageDateTime(stage, rally.country) : null;
+                    return (
+                      <button
+                        key={stage.id}
+                        onClick={() => handleStageSelect(stage)}
+                        className={`p-3 rounded-lg text-left transition-all ${
+                          selectedStage?.id === stage.id
+                            ? 'bg-wrc-blue text-white border border-wrc-blue'
+                            : 'bg-white/5 text-white/70 border border-white/10 hover:bg-white/10'
+                        }`}
+                      >
+                        <div className="font-semibold text-sm">
+                          SS{stage.stage_number}
+                          {stage.is_power_stage && ' ⚡'}
+                        </div>
+                        <div className="text-xs opacity-60 truncate">{stage.name}</div>
+                        <div className="flex items-center gap-2 mt-1">
+                          {stage.distance_km && (
+                            <span className="text-xs opacity-40">{stage.distance_km} km</span>
+                          )}
+                        </div>
+                        {dt && (
+                          <div className="text-xs opacity-50 mt-1" suppressHydrationWarning>
+                            {dt.date} &middot; {dt.ukTime} UK
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
 
                 {/* Stage results */}
