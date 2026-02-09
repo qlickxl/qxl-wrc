@@ -143,14 +143,19 @@ export default function Home() {
             className="fixed top-0 left-0 right-0 z-40 bg-wrc-dark/90 backdrop-blur-lg border-b border-white/10"
           >
             <div className="max-w-7xl mx-auto px-4 flex items-center justify-between h-14">
-              <span className="text-white font-bold text-lg">WRC Rally</span>
-              <div className="flex gap-4">
+              <div className="flex items-center gap-2">
+                <img src="/wrc-car-logo.svg" alt="" className="h-7 w-auto" />
+                <span className="text-white font-bold text-lg">WRC Rally</span>
+              </div>
+              <div className="flex gap-1">
                 {['calendar', 'upcoming', 'results'].map((section) => (
                   <a
                     key={section}
                     href={`#${section}`}
-                    className={`text-sm capitalize transition-colors ${
-                      activeSection === section ? 'text-wrc-blue font-semibold' : 'text-white/60 hover:text-white'
+                    className={`px-4 py-1.5 rounded-full text-sm capitalize transition-all ${
+                      activeSection === section
+                        ? 'bg-wrc-blue text-white font-semibold shadow-lg shadow-wrc-blue/30'
+                        : 'text-white/60 hover:bg-white/10 hover:text-white'
                     }`}
                   >
                     {section}
@@ -158,7 +163,11 @@ export default function Home() {
                 ))}
                 <button
                   onClick={() => setStandingsOpen(true)}
-                  className="text-sm text-white/60 hover:text-white transition-colors"
+                  className={`px-4 py-1.5 rounded-full text-sm transition-all ${
+                    standingsOpen
+                      ? 'bg-wrc-blue text-white font-semibold shadow-lg shadow-wrc-blue/30'
+                      : 'text-white/60 hover:bg-white/10 hover:text-white'
+                  }`}
                 >
                   Standings
                 </button>
@@ -176,9 +185,13 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
           >
-            <h1 className="text-5xl md:text-7xl font-extrabold text-white tracking-tight">
-              <span className="text-wrc-blue">WRC</span> Rally
-            </h1>
+            <div className="flex items-center justify-center gap-4 mb-2">
+              <img src="/wrc-car-logo.svg" alt="WRC Rally Car" className="h-16 md:h-20 w-auto" />
+              <h1 className="text-5xl md:text-7xl font-extrabold text-white tracking-tight">
+                AWagi <span className="text-wrc-blue">WRC</span>
+              </h1>
+            </div>
+            <div className="w-24 h-1 bg-wrc-blue mx-auto rounded-full" />
             <p className="text-white/50 text-lg mt-3">World Rally Championship Analytics</p>
           </motion.div>
 
@@ -194,18 +207,21 @@ export default function Home() {
                 <p className="text-white/50 text-sm mb-3 uppercase tracking-wider">Next Rally</p>
                 <p className="text-white font-semibold text-xl mb-4">{countdown.label}</p>
                 {(countdown.days > 0 || countdown.hours > 0) && (
-                  <div className="flex gap-4 justify-center" suppressHydrationWarning>
+                  <div className="flex items-start justify-center" suppressHydrationWarning>
                     {[
                       { value: countdown.days, label: 'Days' },
                       { value: countdown.hours, label: 'Hrs' },
                       { value: countdown.minutes, label: 'Min' },
                       { value: countdown.seconds, label: 'Sec' },
-                    ].map((item) => (
-                      <div key={item.label} className="text-center">
-                        <div className="text-3xl font-bold text-wrc-blue font-mono" suppressHydrationWarning>
-                          {String(item.value).padStart(2, '0')}
+                    ].map((item, i) => (
+                      <div key={item.label} className="flex items-start">
+                        {i > 0 && <span className="text-wrc-red text-3xl font-bold mx-1 -mt-0.5">:</span>}
+                        <div className="text-center">
+                          <div className="text-3xl font-bold text-wrc-blue font-mono" suppressHydrationWarning>
+                            {String(item.value).padStart(2, '0')}
+                          </div>
+                          <div className="text-white/40 text-xs uppercase">{item.label}</div>
                         </div>
-                        <div className="text-white/40 text-xs uppercase">{item.label}</div>
                       </div>
                     ))}
                   </div>
@@ -245,15 +261,20 @@ export default function Home() {
           <>
             {/* Full Calendar Section */}
             <section id="calendar" data-section="calendar" className="scroll-mt-20 mb-16">
-              <motion.h2
+              <motion.div
                 variants={slideUpVariants}
                 initial="hidden"
                 whileInView="visible"
                 viewport={{ once: true }}
-                className="text-3xl font-bold text-white mb-6"
+                className="bg-wrc-blue rounded-xl px-6 py-4 mb-6"
               >
-                {rallies.length > 0 ? rallies[0].season : new Date().getFullYear()} Rally Calendar
-              </motion.h2>
+                <h2 className="text-2xl md:text-3xl font-bold text-white">
+                  {rallies.length > 0 ? rallies[0].season : new Date().getFullYear()} Rally Calendar
+                </h2>
+                <p className="text-white/70 text-sm mt-1">
+                  {completedRallies.length} completed &middot; {upcomingRallies.length} upcoming
+                </p>
+              </motion.div>
 
               {rallies.length === 0 ? (
                 <p className="text-white/50 text-center py-12">No calendar data available. Sync the WRC API to populate.</p>
@@ -263,7 +284,7 @@ export default function Home() {
                   initial="hidden"
                   whileInView="visible"
                   viewport={{ once: true }}
-                  className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"
+                  className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
                 >
                   {rallies.map((rally) => {
                     const isPast = rally.start_date && new Date(rally.start_date) <= new Date();
@@ -314,15 +335,15 @@ export default function Home() {
             {/* Upcoming Rallies */}
             {upcomingRallies.length > 0 && (
               <section id="upcoming" data-section="upcoming" className="scroll-mt-20 mb-16">
-                <motion.h2
+                <motion.div
                   variants={slideUpVariants}
                   initial="hidden"
                   whileInView="visible"
                   viewport={{ once: true }}
-                  className="text-3xl font-bold text-white mb-6"
+                  className="bg-wrc-blue/80 rounded-xl px-6 py-3 mb-6"
                 >
-                  Upcoming Rallies
-                </motion.h2>
+                  <h2 className="text-2xl font-bold text-white">Upcoming Rallies</h2>
+                </motion.div>
                 <motion.div
                   variants={staggerContainer}
                   initial="hidden"
@@ -359,15 +380,15 @@ export default function Home() {
             {/* Recent Results */}
             {completedRallies.length > 0 && (
               <section id="results" data-section="results" className="scroll-mt-20 mb-16">
-                <motion.h2
+                <motion.div
                   variants={slideUpVariants}
                   initial="hidden"
                   whileInView="visible"
                   viewport={{ once: true }}
-                  className="text-3xl font-bold text-white mb-6"
+                  className="bg-wrc-blue/80 rounded-xl px-6 py-3 mb-6"
                 >
-                  Recent Results
-                </motion.h2>
+                  <h2 className="text-2xl font-bold text-white">Recent Results</h2>
+                </motion.div>
                 <motion.div
                   variants={staggerContainer}
                   initial="hidden"
@@ -406,7 +427,8 @@ export default function Home() {
       {/* Footer */}
       <footer className="border-t border-white/10 py-8 px-4">
         <div className="max-w-7xl mx-auto text-center text-white/30 text-sm">
-          <p>Awagi WRC Rally • World Rally Championship Analytics</p>
+          <p className="font-semibold text-white/50 mb-1">AWagi WRC</p>
+          <p>&copy; {new Date().getFullYear()} AWagi WRC Rally Analytics &bull; Data from eWRC</p>
         </div>
       </footer>
 

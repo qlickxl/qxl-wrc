@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { staggerContainer, staggerItem, modalVariants, backdropVariants } from '@/utils/animations';
 import { StandingsCardSkeleton } from './LoadingSkeleton';
+import ManufacturerLogo from './ManufacturerLogo';
 
 interface DriverStanding {
   position: number;
@@ -181,7 +182,9 @@ export default function Standings({ isOpen, onClose }: StandingsProps) {
                       <div className="text-xl">{getFlag(d.nationality)}</div>
                       <div className="flex-1 min-w-0">
                         <div className="text-white font-semibold truncate">{d.driver_name}</div>
-                        <div className="text-white/50 text-sm truncate">{d.manufacturer}</div>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <ManufacturerLogo name={d.manufacturer} size={18} />
+                        </div>
                       </div>
                       <div className="text-right">
                         <div className="text-wrc-blue font-bold text-lg">{d.points}</div>
@@ -218,7 +221,8 @@ export default function Standings({ isOpen, onClose }: StandingsProps) {
                         {m.position}
                       </div>
                       <div className="text-xl">{getFlag(m.nationality)}</div>
-                      <div className="flex-1 min-w-0">
+                      <div className="flex-1 min-w-0 flex items-center gap-3">
+                        <ManufacturerLogo name={m.manufacturer_name} size={32} />
                         <div className="text-white font-semibold truncate">{m.manufacturer_name}</div>
                       </div>
                       <div className="text-right">

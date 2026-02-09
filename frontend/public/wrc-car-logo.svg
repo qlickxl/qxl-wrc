@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 120" fill="none">
+  <!-- Rally car side profile - WRC style compact hatchback -->
+  <!-- Body shadow -->
+  <ellipse cx="100" cy="105" rx="75" ry="8" fill="#003087" opacity="0.2"/>
+
+  <!-- Underbody / chassis -->
+  <path d="M30 78 L170 78 L168 85 L32 85 Z" fill="#0a1628"/>
+
+  <!-- Main body -->
+  <path d="M35 78 L40 55 L55 42 L78 35 L120 35 L145 42 L158 55 L165 70 L165 78 Z" fill="#003087"/>
+
+  <!-- Roof / cabin -->
+  <path d="M62 42 L78 28 L128 28 L142 42 Z" fill="#1a4a8a"/>
+
+  <!-- Windshield -->
+  <path d="M65 42 L78 30 L100 30 L100 42 Z" fill="#4a9eff" opacity="0.6"/>
+
+  <!-- Rear window -->
+  <path d="M110 42 L110 30 L128 30 L140 42 Z" fill="#4a9eff" opacity="0.5"/>
+
+  <!-- Side windows -->
+  <path d="M100 30 L100 42 L110 42 L110 30 Z" fill="#4a9eff" opacity="0.4"/>
+
+  <!-- Door line -->
+  <line x1="100" y1="42" x2="100" y2="72" stroke="#1a4a8a" stroke-width="1"/>
+
+  <!-- Rear spoiler -->
+  <path d="M140 28 L155 24 L157 22 L155 28 L142 28 Z" fill="#E4002B"/>
+  <rect x="148" y="22" width="10" height="3" rx="1" fill="#E4002B"/>
+
+  <!-- Rally lights (roof pod) -->
+  <rect x="82" y="24" width="6" height="4" rx="1" fill="#FFD700"/>
+  <rect x="92" y="24" width="6" height="4" rx="1" fill="#FFD700"/>
+  <rect x="102" y="24" width="6" height="4" rx="1" fill="#FFD700"/>
+  <rect x="112" y="24" width="6" height="4" rx="1" fill="#FFD700"/>
+
+  <!-- Front headlights -->
+  <ellipse cx="42" cy="60" rx="4" ry="6" fill="#FFD700" opacity="0.9"/>
+  <ellipse cx="42" cy="60" rx="2" ry="3" fill="#FFFFFF"/>
+
+  <!-- Rear tail lights -->
+  <rect x="162" y="60" width="4" height="8" rx="1" fill="#E4002B"/>
+
+  <!-- Front bumper / splitter -->
+  <path d="M30 78 L35 70 L45 68 L45 78 Z" fill="#0a1628"/>
+
+  <!-- Rear diffuser -->
+  <path d="M158 68 L165 70 L168 78 L158 78 Z" fill="#0a1628"/>
+
+  <!-- Wide wheel arches - front -->
+  <path d="M50 78 C50 65, 75 65, 75 78" fill="#0a1628"/>
+
+  <!-- Wide wheel arches - rear -->
+  <path d="M125 78 C125 65, 150 65, 150 78" fill="#0a1628"/>
+
+  <!-- Front wheel -->
+  <circle cx="62" cy="82" r="14" fill="#1a1a2e"/>
+  <circle cx="62" cy="82" r="12" fill="#333"/>
+  <circle cx="62" cy="82" r="9" fill="#555"/>
+  <circle cx="62" cy="82" r="4" fill="#888"/>
+  <!-- Tire -->
+  <circle cx="62" cy="82" r="14" fill="none" stroke="#1a1a2e" stroke-width="5"/>
+
+  <!-- Rear wheel -->
+  <circle cx="138" cy="82" r="14" fill="#1a1a2e"/>
+  <circle cx="138" cy="82" r="12" fill="#333"/>
+  <circle cx="138" cy="82" r="9" fill="#555"/>
+  <circle cx="138" cy="82" r="4" fill="#888"/>
+  <!-- Tire -->
+  <circle cx="138" cy="82" r="14" fill="none" stroke="#1a1a2e" stroke-width="5"/>
+
+  <!-- Racing stripes -->
+  <path d="M50 55 L55 42 L62 42 L57 55 Z" fill="#E4002B" opacity="0.8"/>
+  <path d="M52 62 L56 50 L60 50 L56 62 Z" fill="#FFFFFF" opacity="0.3"/>
+
+  <!-- Number plate area -->
+  <rect x="70" y="50" width="18" height="14" rx="2" fill="#FFFFFF"/>
+  <text x="79" y="61" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#003087" text-anchor="middle">WRC</text>
+
+  <!-- Mud flaps -->
+  <rect x="76" y="85" width="3" height="6" rx="1" fill="#0a1628"/>
+  <rect x="152" y="85" width="3" height="6" rx="1" fill="#0a1628"/>
+
+  <!-- Gravel spray effect -->
+  <circle cx="160" cy="90" r="2" fill="#8B7355" opacity="0.4"/>
+  <circle cx="165" cy="88" r="1.5" fill="#8B7355" opacity="0.3"/>
+  <circle cx="168" cy="92" r="1" fill="#8B7355" opacity="0.3"/>
+  <circle cx="172" cy="86" r="1.5" fill="#8B7355" opacity="0.2"/>
+  <circle cx="175" cy="90" r="1" fill="#8B7355" opacity="0.2"/>
+</svg>
