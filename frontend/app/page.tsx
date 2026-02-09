@@ -68,7 +68,7 @@ export default function Home() {
   useEffect(() => {
     const fetchRallies = async () => {
       try {
-        const res = await fetch('/api/calendar');
+        const res = await fetch('/api/wrc/rallies');
         if (res.ok) {
           const data = await res.json();
           setRallies(data);
@@ -273,7 +273,7 @@ export default function Home() {
                 viewport={{ once: true }}
                 className="text-3xl font-bold text-white mb-6"
               >
-                {new Date().getFullYear()} Rally Calendar
+                {rallies.length > 0 ? rallies[0].season : new Date().getFullYear()} Rally Calendar
               </motion.h2>
 
               {rallies.length === 0 ? (

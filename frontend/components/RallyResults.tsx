@@ -97,7 +97,7 @@ export default function RallyResults({ rally, isOpen, onClose }: RallyResultsPro
     const fetchData = async () => {
       try {
         const [resultsRes, stagesRes] = await Promise.all([
-          fetch(`/api/rallies/${rally.id}/results`),
+          fetch(`/api/wrc/rallies/${rally.id}/results`),
           fetch(`${process.env.NEXT_PUBLIC_API_URL}/wrc/rallies/${rally.id}/stages`),
         ]);
         if (resultsRes.ok) setResults(await resultsRes.json());

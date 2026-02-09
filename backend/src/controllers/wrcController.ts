@@ -16,7 +16,12 @@ function formatTime(ms: number | null): string | null {
 
 export const getRallies = async (req: Request, res: Response) => {
   try {
-    const season = req.query.season || new Date().getFullYear();
+    let season = req.query.season;
+    if (!season) {
+      // Default to latest season with data
+      const latest = await pool.query('SELECT MAX(season) as max_season FROM wrc_rallies');
+      season = latest.rows[0]?.max_season || new Date().getFullYear();
+    }
     const result = await pool.query(
       `SELECT * FROM wrc_rallies WHERE season = $1 ORDER BY round`,
       [season]

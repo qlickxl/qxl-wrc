@@ -75,8 +75,8 @@ export default function Standings({ isOpen, onClose }: StandingsProps) {
     const fetchStandings = async () => {
       try {
         const [driversRes, mfgRes] = await Promise.all([
-          fetch('/api/standings/drivers'),
-          fetch('/api/standings/manufacturers'),
+          fetch('/api/wrc/standings/drivers'),
+          fetch('/api/wrc/standings/manufacturers'),
         ]);
         if (driversRes.ok) {
           const data = await driversRes.json();
