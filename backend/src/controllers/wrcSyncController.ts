@@ -75,11 +75,12 @@ export const scrapeStandings = async (req: Request, res: Response) => {
 export const scrapeResults = async (req: Request, res: Response) => {
   try {
     const round = req.body.round ? parseInt(req.body.round) : undefined;
+    const season = req.body.season ? parseInt(req.body.season) : undefined;
     if (round) {
-      const result = await ResultsScraperService.scrapeRally(round);
+      const result = await ResultsScraperService.scrapeRally(round, season);
       res.json({ success: true, ...result });
     } else {
-      const result = await ResultsScraperService.scrapeAllRallies();
+      const result = await ResultsScraperService.scrapeAllRallies(season);
       res.json({ success: true, ...result });
     }
   } catch (error: any) {
