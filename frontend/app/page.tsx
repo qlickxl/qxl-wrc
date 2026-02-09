@@ -6,6 +6,7 @@ import { staggerContainer, staggerItem, slideUpVariants, cardVariants } from '@/
 import { RallySpinner } from '@/components/LoadingSkeleton';
 import Standings from '@/components/Standings';
 import RallyResults from '@/components/RallyResults';
+import AnimatedFlag from '@/components/AnimatedFlag';
 
 interface Rally {
   id: number;
@@ -20,28 +21,6 @@ interface Rally {
   total_stages: number;
   status: string;
   event_id: number;
-}
-
-const COUNTRY_TO_CODE: Record<string, string> = {
-  'Monaco': 'MC', 'Sweden': 'SE', 'Kenya': 'KE', 'Croatia': 'HR',
-  'Portugal': 'PT', 'Italy': 'IT', 'Greece': 'GR', 'Estonia': 'EE',
-  'Finland': 'FI', 'Chile': 'CL', 'Japan': 'JP', 'Spain': 'ES',
-  'Mexico': 'MX', 'Poland': 'PL', 'Latvia': 'LV', 'Germany': 'DE',
-  'Turkey': 'TR', 'France': 'FR', 'Belgium': 'BE', 'Great Britain': 'GB',
-  'United Kingdom': 'GB', 'New Zealand': 'NZ', 'Australia': 'AU',
-  'Argentina': 'AR', 'Ireland': 'IE', 'Norway': 'NO', 'Austria': 'AT',
-  'Netherlands': 'NL', 'South Korea': 'KR', 'Czech Republic': 'CZ',
-  'Saudi Arabia': 'SA', 'Sardinia': 'IT', 'Corsica': 'FR',
-};
-
-function getFlag(country: string): string {
-  const code = COUNTRY_TO_CODE[country];
-  if (!code) return '🏁';
-  return code
-    .toUpperCase()
-    .split('')
-    .map((c) => String.fromCodePoint(c.charCodeAt(0) + 127397))
-    .join('');
 }
 
 function getSurfaceEmoji(surface: string | null): string {
@@ -301,7 +280,7 @@ export default function Home() {
                       >
                         <div className="flex items-start justify-between mb-2">
                           <span className="text-white/40 text-sm font-mono">R{rally.round}</span>
-                          <span className="text-2xl">{getFlag(rally.country)}</span>
+                          <AnimatedFlag country={rally.country} size={36} />
                         </div>
                         <h3 className="text-white font-bold text-lg">{rally.name}</h3>
                         <p className="text-white/50 text-sm mt-1">{rally.country}</p>
@@ -358,7 +337,7 @@ export default function Home() {
                       onClick={() => handleRallyClick(rally)}
                       className="table-row-interactive flex items-center gap-4 p-4 rounded-xl bg-white/5 border border-white/10"
                     >
-                      <div className="text-2xl">{getFlag(rally.country)}</div>
+                      <AnimatedFlag country={rally.country} size={32} />
                       <div className="flex-1 min-w-0">
                         <div className="text-white font-semibold">{rally.name}</div>
                         <div className="text-white/40 text-sm">
@@ -403,7 +382,7 @@ export default function Home() {
                       onClick={() => handleRallyClick(rally)}
                       className="table-row-interactive flex items-center gap-4 p-4 rounded-xl bg-white/5 border border-white/10"
                     >
-                      <div className="text-2xl">{getFlag(rally.country)}</div>
+                      <AnimatedFlag country={rally.country} size={32} />
                       <div className="flex-1 min-w-0">
                         <div className="text-white font-semibold">{rally.name}</div>
                         <div className="text-white/40 text-sm">

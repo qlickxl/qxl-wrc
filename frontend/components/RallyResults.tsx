@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { staggerContainer, staggerItem, modalVariants, backdropVariants } from '@/utils/animations';
 import { RallySpinner } from './LoadingSkeleton';
+import AnimatedFlag from './AnimatedFlag';
 
 interface RallyResult {
   position: number | null;
@@ -55,27 +56,6 @@ interface Rally {
   surface: string;
 }
 
-const COUNTRY_TO_CODE: Record<string, string> = {
-  'Monaco': 'MC', 'Sweden': 'SE', 'Kenya': 'KE', 'Croatia': 'HR',
-  'Portugal': 'PT', 'Italy': 'IT', 'Greece': 'GR', 'Estonia': 'EE',
-  'Finland': 'FI', 'Chile': 'CL', 'Japan': 'JP', 'Spain': 'ES',
-  'Mexico': 'MX', 'Poland': 'PL', 'Latvia': 'LV', 'Germany': 'DE',
-  'Turkey': 'TR', 'France': 'FR', 'Belgium': 'BE', 'Great Britain': 'GB',
-  'United Kingdom': 'GB', 'New Zealand': 'NZ', 'Australia': 'AU',
-  'Argentina': 'AR', 'Ireland': 'IE', 'Norway': 'NO', 'Austria': 'AT',
-  'Netherlands': 'NL', 'South Korea': 'KR', 'Czech Republic': 'CZ',
-  'Paraguay': 'PY', 'Saudi Arabia': 'SA',
-};
-
-function getFlag(country: string): string {
-  const code = COUNTRY_TO_CODE[country];
-  if (!code) return '🏁';
-  return code
-    .toUpperCase()
-    .split('')
-    .map((c) => String.fromCodePoint(c.charCodeAt(0) + 127397))
-    .join('');
-}
 
 const COUNTRY_TO_TIMEZONE: Record<string, string> = {
   'Monaco': 'Europe/Monaco', 'Sweden': 'Europe/Stockholm', 'Kenya': 'Africa/Nairobi',
@@ -207,8 +187,9 @@ export default function RallyResults({ rally, isOpen, onClose }: RallyResultsPro
           <div className="p-6 border-b border-white/10">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-2xl font-bold text-white">
-                  {getFlag(rally.country)} {rally.name}
+                <h2 className="text-2xl font-bold text-white flex items-center gap-3">
+                  <AnimatedFlag country={rally.country} size={32} />
+                  {rally.name}
                 </h2>
                 <p className="text-white/50 text-sm mt-1">
                   {rally.country} {rally.surface && `• ${rally.surface}`}
@@ -308,7 +289,7 @@ export default function RallyResults({ rally, isOpen, onClose }: RallyResultsPro
                         }`}
                       >
                         <div className="font-semibold text-sm">
-                          SS{stage.stage_number}
+                          {stage.stage_number === 0 ? 'SH' : `SS${stage.stage_number}`}
                           {stage.is_power_stage && ' ⚡'}
                         </div>
                         <div className="text-xs opacity-60 truncate">{stage.name}</div>
@@ -335,7 +316,7 @@ export default function RallyResults({ rally, isOpen, onClose }: RallyResultsPro
                     className="mt-4"
                   >
                     <h3 className="text-white font-semibold mb-3">
-                      SS{selectedStage.stage_number}: {selectedStage.name}
+                      {selectedStage.stage_number === 0 ? 'Shakedown' : `SS${selectedStage.stage_number}`}: {selectedStage.name}
                       {selectedStage.is_power_stage && ' ⚡ Power Stage'}
                     </h3>
                     <div className="space-y-1">

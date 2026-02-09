@@ -69,6 +69,17 @@ interface EwrcStage {
   };
 }
 
+interface EwrcShakedown {
+  id: number;
+  event_id: number;
+  info: string;
+  start: string;       // e.g. "2026-02-12 10:01:00"
+  distance: number;
+  place: string;       // e.g. "Umeå City"
+  visible: number;
+  time_type: number;
+}
+
 interface EwrcEventDetail {
   id: number;
   season: number;
@@ -132,6 +143,23 @@ function extractJsonArray(decoded: string, key: string): any[] {
     }
   }
   return [];
+}
+
+function extractShakedown(decoded: string): EwrcShakedown | null {
+  const marker = '"shakedown":{"id":';
+  const idx = decoded.indexOf(marker);
+  if (idx < 0) return null;
+  const start = idx + '"shakedown":'.length;
+  let depth = 0;
+  for (let i = start; i < decoded.length; i++) {
+    if (decoded[i] === '{') depth++;
+    else if (decoded[i] === '}') depth--;
+    if (depth === 0) {
+      try { return JSON.parse(decoded.slice(start, i + 1)); }
+      catch { return null; }
+    }
+  }
+  return null;
 }
 
 async function fetchPage(path: string): Promise<string> {
@@ -221,17 +249,42 @@ export class ResultsScraperService {
     const stagePayloads = decodeRSCPayloads(stagesHtml);
 
     let stageList: EwrcStage[] = [];
+    let shakedown: EwrcShakedown | null = null;
     for (const decoded of stagePayloads) {
-      const arr = extractJsonArray(decoded, 'stages');
-      if (arr.length > 0 && arr[0]?.stage) { stageList = arr; break; }
+      if (stageList.length === 0) {
+        const arr = extractJsonArray(decoded, 'stages');
+        if (arr.length > 0 && arr[0]?.stage) stageList = arr;
+      }
+      if (!shakedown) {
+        shakedown = extractShakedown(decoded);
+      }
     }
 
     // Ensure rally record
     const rallyRow = await this.ensureRally(eventInfo, eventDetail, season);
     const rallyId = rallyRow.id;
 
-    // Upsert stages
+    // Upsert shakedown as stage 0
     let stageCount = 0;
+    if (shakedown && shakedown.place) {
+      const shakedownStage: EwrcStage = {
+        stage: {
+          id: shakedown.id,
+          event_id: shakedown.event_id,
+          stage_number: 0,
+          leg_number: 0,
+          name: shakedown.place,
+          first_car_time: shakedown.start,
+          distance: shakedown.distance,
+          powerstage: 0,
+          cancelled: 0,
+        },
+      };
+      await this.upsertStage(rallyId, shakedownStage);
+      stageCount++;
+    }
+
+    // Upsert stages
     for (const s of stageList) {
       if (s.stage.cancelled) continue;
       await this.upsertStage(rallyId, s);
@@ -397,11 +450,15 @@ export class ResultsScraperService {
 
         let stageList: EwrcStage[] = [];
         let eventDetail: EwrcEventDetail | undefined;
+        let shakedown: EwrcShakedown | null = null;
 
         for (const decoded of payloads) {
           if (stageList.length === 0) {
             const arr = extractJsonArray(decoded, 'stages');
             if (arr.length > 0 && arr[0]?.stage) stageList = arr;
+          }
+          if (!shakedown) {
+            shakedown = extractShakedown(decoded);
           }
           if (!eventDetail && decoded.includes('"from_date"')) {
             const match = decoded.match(/"data":(\{"id":\d+.*?"from_date".*?\})/s);
@@ -421,6 +478,26 @@ export class ResultsScraperService {
         const rallyId = rallyRow.id;
 
         let stageCount = 0;
+
+        // Insert shakedown as stage 0
+        if (shakedown && shakedown.place) {
+          const shakedownStage: EwrcStage = {
+            stage: {
+              id: shakedown.id,
+              event_id: shakedown.event_id,
+              stage_number: 0,
+              leg_number: 0,
+              name: shakedown.place,
+              first_car_time: shakedown.start,
+              distance: shakedown.distance,
+              powerstage: 0,
+              cancelled: 0,
+            },
+          };
+          await this.upsertStage(rallyId, shakedownStage);
+          stageCount++;
+        }
+
         for (const s of stageList) {
           if (s.stage.cancelled) continue;
           await this.upsertStage(rallyId, s);
