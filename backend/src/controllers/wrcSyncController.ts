@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { WrcSyncService } from '../services/wrc-sync.service';
+import { StandingsScraperService } from '../services/standings-scraper.service';
 
 export const syncCalendar = async (req: Request, res: Response) => {
   try {
@@ -56,6 +57,17 @@ export const recomputeStats = async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error('Recompute stats error:', error);
     res.status(500).json({ error: error.message || 'Failed to recompute stats' });
+  }
+};
+
+export const scrapeStandings = async (req: Request, res: Response) => {
+  try {
+    const season = req.body.season || undefined;
+    const result = await StandingsScraperService.scrapeAndSync(season);
+    res.json({ success: true, ...result });
+  } catch (error: any) {
+    console.error('Scrape standings error:', error);
+    res.status(500).json({ error: error.message || 'Failed to scrape standings' });
   }
 };
 

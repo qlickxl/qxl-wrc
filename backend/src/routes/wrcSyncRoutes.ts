@@ -4,6 +4,7 @@ import {
   syncRally,
   syncSeason,
   syncStandings,
+  scrapeStandings,
   recomputeStats,
   getApiStatus,
 } from '../controllers/wrcSyncController';
@@ -14,6 +15,7 @@ router.post('/calendar', syncCalendar);
 router.post('/rally', syncRally);
 router.post('/season', syncSeason);
 router.post('/standings', syncStandings);
+router.post('/scrape-standings', scrapeStandings);
 router.post('/recompute-stats', recomputeStats);
 router.get('/status', getApiStatus);
 

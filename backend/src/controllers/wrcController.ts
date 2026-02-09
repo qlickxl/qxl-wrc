@@ -138,7 +138,11 @@ export const getStageResults = async (req: Request, res: Response) => {
 
 export const getDriverStandings = async (req: Request, res: Response) => {
   try {
-    const season = req.query.season || new Date().getFullYear();
+    let season = req.query.season;
+    if (!season) {
+      const latest = await pool.query('SELECT MAX(season) as max_season FROM wrc_driver_standings');
+      season = latest.rows[0]?.max_season || new Date().getFullYear();
+    }
     const result = await pool.query(
       `SELECT
         ds.position,
@@ -165,7 +169,11 @@ export const getDriverStandings = async (req: Request, res: Response) => {
 
 export const getManufacturerStandings = async (req: Request, res: Response) => {
   try {
-    const season = req.query.season || new Date().getFullYear();
+    let season = req.query.season;
+    if (!season) {
+      const latest = await pool.query('SELECT MAX(season) as max_season FROM wrc_manufacturer_standings');
+      season = latest.rows[0]?.max_season || new Date().getFullYear();
+    }
     const result = await pool.query(
       `SELECT
         ms.position,
