@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { WrcSyncService } from '../services/wrc-sync.service';
 import { StandingsScraperService } from '../services/standings-scraper.service';
+import { ResultsScraperService } from '../services/results-scraper.service';
 
 export const syncCalendar = async (req: Request, res: Response) => {
   try {
@@ -68,6 +69,22 @@ export const scrapeStandings = async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error('Scrape standings error:', error);
     res.status(500).json({ error: error.message || 'Failed to scrape standings' });
+  }
+};
+
+export const scrapeResults = async (req: Request, res: Response) => {
+  try {
+    const round = req.body.round ? parseInt(req.body.round) : undefined;
+    if (round) {
+      const result = await ResultsScraperService.scrapeRally(round);
+      res.json({ success: true, ...result });
+    } else {
+      const result = await ResultsScraperService.scrapeAllRallies();
+      res.json({ success: true, ...result });
+    }
+  } catch (error: any) {
+    console.error('Scrape results error:', error);
+    res.status(500).json({ error: error.message || 'Failed to scrape results' });
   }
 };
 
