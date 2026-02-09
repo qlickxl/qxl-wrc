@@ -146,14 +146,42 @@ async function fetchPage(path: string): Promise<string> {
   return data;
 }
 
+// ---------- Stage times interfaces ----------
+
+interface EwrcStageTime {
+  id: number;
+  stage_number: number;
+  name: string;
+  cancelled: number;
+  time: { raw: number; pretty: string };
+  notional: number;
+  total_sum: { raw: number; pretty: string };
+  po_rz: number;       // stage position
+  after_stage: number;  // overall position after this stage
+  retired: number;
+}
+
+interface EwrcTimesEntry {
+  id: number;
+  start_number: number;
+  driver: { id: number; firstname: string; lastname: string; flag: string };
+  codriver: { id: number; firstname: string; lastname: string; flag: string };
+  car: { name: string };
+  team: { name: string };
+  superally: number;
+  result: number;
+  time: { raw: number; pretty: string };
+  stage_times: EwrcStageTime[];
+}
+
 // ---------- Service ----------
 
 export class ResultsScraperService {
   /**
-   * Scrape results + stages for a single rally
+   * Scrape results + stages + stage times for a single rally
    */
   static async scrapeRally(round: number, season = 2025): Promise<{
-    rally: string; crews: number; results: number; stages: number;
+    rally: string; crews: number; results: number; stages: number; stageResults: number;
   }> {
     const events = EWRC_EVENTS[season];
     if (!events) throw new Error(`No eWRC event data for season ${season}`);
@@ -221,16 +249,112 @@ export class ResultsScraperService {
       await this.upsertOverallResult(rallyId, crewId, entry, wrcResults[0].time.raw);
       resultCount++;
     }
-
     console.log(`[results-scraper] ${eventInfo.name}: ${crewCount} crews, ${resultCount} results`);
-    return { rally: eventInfo.name, crews: crewCount, results: resultCount, stages: stageCount };
+
+    // Scrape and upsert per-stage times
+    let stageResultCount = 0;
+    try {
+      stageResultCount = await this.scrapeStageTimesForRally(rallyId, eventInfo);
+    } catch (err: any) {
+      console.warn(`[results-scraper] ${eventInfo.name}: stage times failed: ${err.message}`);
+    }
+
+    return { rally: eventInfo.name, crews: crewCount, results: resultCount, stages: stageCount, stageResults: stageResultCount };
+  }
+
+  /**
+   * Scrape per-stage times from the /event/{id}-{slug}/stage-times page
+   */
+  static async scrapeStageTimesForRally(rallyId: number, eventInfo: EwrcEventConfig): Promise<number> {
+    const html = await fetchPage(`/event/${eventInfo.ewrcId}-${eventInfo.slug}/stage-times`);
+    const payloads = decodeRSCPayloads(html);
+
+    // Find the times array - it's embedded in the RSC as a "times" prop
+    let timesEntries: EwrcTimesEntry[] = [];
+    for (const decoded of payloads) {
+      if (!decoded.includes('"stage_times":[')) continue;
+      const arr = extractJsonArray(decoded, 'times');
+      if (arr.length > 0 && arr[0]?.stage_times) {
+        timesEntries = arr;
+        break;
+      }
+    }
+
+    if (timesEntries.length === 0) {
+      console.log(`[results-scraper] ${eventInfo.name}: no stage times data found`);
+      return 0;
+    }
+
+    // Build stage_number -> stage DB id map
+    const stageRows = await pool.query(
+      'SELECT id, stage_number FROM wrc_stages WHERE rally_id = $1',
+      [rallyId]
+    );
+    const stageMap = new Map<number, number>();
+    for (const row of stageRows.rows) {
+      stageMap.set(row.stage_number, row.id);
+    }
+
+    let upserted = 0;
+    for (const entry of timesEntries) {
+      // Find crew by driver name match
+      const driverName = `${entry.driver.lastname} ${entry.driver.firstname.charAt(0)}.`;
+      const crewRow = await pool.query(
+        `SELECT c.id FROM wrc_crews c
+         JOIN wrc_drivers d ON d.id = c.driver_id
+         WHERE c.rally_id = $1 AND d.name = $2 LIMIT 1`,
+        [rallyId, driverName]
+      );
+      if (crewRow.rows.length === 0) continue;
+      const crewId = crewRow.rows[0].id;
+
+      for (const st of entry.stage_times) {
+        if (st.cancelled || st.retired) continue;
+        const stageId = stageMap.get(st.stage_number);
+        if (!stageId) continue;
+
+        const stageTimeMs = st.time?.raw || null;
+        const overallTimeMs = st.total_sum?.raw || null;
+        const stagePosition = st.po_rz || null;
+        const overallPosition = st.after_stage || null;
+
+        // Compute gap to stage leader (find fastest time for this stage among all entries)
+        let gapFirstMs: number | null = null;
+        if (stageTimeMs && stagePosition && stagePosition > 1) {
+          // Find stage winner's time
+          const winnerTime = timesEntries.reduce((min, e) => {
+            const winnerSt = e.stage_times.find(s => s.stage_number === st.stage_number);
+            if (winnerSt?.po_rz === 1 && winnerSt.time?.raw) return winnerSt.time.raw;
+            return min;
+          }, 0);
+          if (winnerTime > 0) gapFirstMs = stageTimeMs - winnerTime;
+        }
+
+        await pool.query(
+          `INSERT INTO wrc_stage_results (stage_id, crew_id, stage_time_ms, stage_position, overall_time_ms, overall_position, gap_first_ms)
+           VALUES ($1, $2, $3, $4, $5, $6, $7)
+           ON CONFLICT (stage_id, crew_id) DO UPDATE SET
+             stage_time_ms = COALESCE(EXCLUDED.stage_time_ms, wrc_stage_results.stage_time_ms),
+             stage_position = COALESCE(EXCLUDED.stage_position, wrc_stage_results.stage_position),
+             overall_time_ms = COALESCE(EXCLUDED.overall_time_ms, wrc_stage_results.overall_time_ms),
+             overall_position = COALESCE(EXCLUDED.overall_position, wrc_stage_results.overall_position),
+             gap_first_ms = COALESCE(EXCLUDED.gap_first_ms, wrc_stage_results.gap_first_ms),
+             updated_at = CURRENT_TIMESTAMP`,
+          [stageId, crewId, stageTimeMs, stagePosition, overallTimeMs, overallPosition, gapFirstMs]
+        );
+        upserted++;
+      }
+    }
+
+    console.log(`[results-scraper] ${eventInfo.name}: ${upserted} stage results upserted`);
+    return upserted;
   }
 
   /**
    * Scrape all completed rallies for a season
    */
   static async scrapeAllRallies(season = 2025): Promise<{
-    synced: { rally: string; crews: number; results: number; stages: number }[];
+    synced: { rally: string; crews: number; results: number; stages: number; stageResults: number }[];
     errors: { rally: string; error: string }[];
   }> {
     const events = EWRC_EVENTS[season];
@@ -259,6 +383,61 @@ export class ResultsScraperService {
   }
 
   /**
+   * Scrape stages/itinerary for upcoming rallies (no results needed)
+   */
+  static async scrapeUpcomingStages(season: number): Promise<{ rally: string; stages: number }[]> {
+    const events = EWRC_EVENTS[season];
+    if (!events) throw new Error(`No eWRC event data for season ${season}`);
+
+    const results = [];
+    for (const event of events) {
+      try {
+        const html = await fetchPage(`/results/${event.ewrcId}-${event.slug}/`);
+        const payloads = decodeRSCPayloads(html);
+
+        let stageList: EwrcStage[] = [];
+        let eventDetail: EwrcEventDetail | undefined;
+
+        for (const decoded of payloads) {
+          if (stageList.length === 0) {
+            const arr = extractJsonArray(decoded, 'stages');
+            if (arr.length > 0 && arr[0]?.stage) stageList = arr;
+          }
+          if (!eventDetail && decoded.includes('"from_date"')) {
+            const match = decoded.match(/"data":(\{"id":\d+.*?"from_date".*?\})/s);
+            if (match) {
+              try { eventDetail = JSON.parse(match[1]); } catch { /* skip */ }
+            }
+          }
+        }
+
+        if (stageList.length === 0) {
+          console.log(`[results-scraper] ${event.name}: no stages yet`);
+          continue;
+        }
+
+        // Ensure rally record (as upcoming)
+        const rallyRow = await this.ensureUpcomingRally(event, eventDetail, season);
+        const rallyId = rallyRow.id;
+
+        let stageCount = 0;
+        for (const s of stageList) {
+          if (s.stage.cancelled) continue;
+          await this.upsertStage(rallyId, s);
+          stageCount++;
+        }
+
+        console.log(`[results-scraper] ${event.name}: ${stageCount} stages (upcoming)`);
+        results.push({ rally: event.name, stages: stageCount });
+        await new Promise(r => setTimeout(r, 500));
+      } catch (err: any) {
+        console.warn(`[results-scraper] ${event.name} upcoming stages failed: ${err.message}`);
+      }
+    }
+    return results;
+  }
+
+  /**
    * Scrape calendar only (for upcoming rallies without results)
    */
   static async scrapeCalendar(season: number): Promise<{ upserted: number }> {
@@ -279,6 +458,33 @@ export class ResultsScraperService {
   }
 
   // ---------- DB upsert helpers ----------
+
+  private static async ensureUpcomingRally(
+    eventInfo: EwrcEventConfig,
+    ewrcEvent: EwrcEventDetail | undefined,
+    season: number
+  ): Promise<{ id: number }> {
+    const country = ewrcEvent?.country?.name?.en || null;
+    const surface = ewrcEvent?.surface?.en || null;
+    const startDate = ewrcEvent?.from_date || null;
+    const endDate = ewrcEvent?.until_date || null;
+    const officialName = ewrcEvent?.name || eventInfo.name;
+
+    const result = await pool.query(
+      `INSERT INTO wrc_rallies (season, round, name, official_name, country, surface, start_date, end_date, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'upcoming')
+       ON CONFLICT (season, round) DO UPDATE SET
+         official_name = COALESCE(EXCLUDED.official_name, wrc_rallies.official_name),
+         country = COALESCE(EXCLUDED.country, wrc_rallies.country),
+         surface = COALESCE(EXCLUDED.surface, wrc_rallies.surface),
+         start_date = COALESCE(EXCLUDED.start_date, wrc_rallies.start_date),
+         end_date = COALESCE(EXCLUDED.end_date, wrc_rallies.end_date),
+         updated_at = CURRENT_TIMESTAMP
+       RETURNING id`,
+      [season, eventInfo.round, eventInfo.name, officialName, country, surface, startDate, endDate]
+    );
+    return result.rows[0];
+  }
 
   private static async ensureRally(
     eventInfo: EwrcEventConfig,

@@ -89,6 +89,17 @@ export const scrapeResults = async (req: Request, res: Response) => {
   }
 };
 
+export const scrapeUpcomingStages = async (req: Request, res: Response) => {
+  try {
+    const season = req.body.season ? parseInt(req.body.season) : new Date().getFullYear();
+    const result = await ResultsScraperService.scrapeUpcomingStages(season);
+    res.json({ success: true, rallies: result });
+  } catch (error: any) {
+    console.error('Scrape upcoming stages error:', error);
+    res.status(500).json({ error: error.message || 'Failed to scrape upcoming stages' });
+  }
+};
+
 export const getApiStatus = async (req: Request, res: Response) => {
   try {
     const status = WrcSyncService.getStatus();

@@ -62,6 +62,7 @@ const COUNTRY_TO_CODE: Record<string, string> = {
   'United Kingdom': 'GB', 'New Zealand': 'NZ', 'Australia': 'AU',
   'Argentina': 'AR', 'Ireland': 'IE', 'Norway': 'NO', 'Austria': 'AT',
   'Netherlands': 'NL', 'South Korea': 'KR', 'Czech Republic': 'CZ',
+  'Paraguay': 'PY', 'Saudi Arabia': 'SA',
 };
 
 function getFlag(country: string): string {
@@ -98,7 +99,7 @@ export default function RallyResults({ rally, isOpen, onClose }: RallyResultsPro
       try {
         const [resultsRes, stagesRes] = await Promise.all([
           fetch(`/api/wrc/rallies/${rally.id}/results`),
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/wrc/rallies/${rally.id}/stages`),
+          fetch(`/api/wrc/rallies/${rally.id}/stages`),
         ]);
         if (resultsRes.ok) setResults(await resultsRes.json());
         if (stagesRes.ok) setStages(await stagesRes.json());
@@ -114,7 +115,7 @@ export default function RallyResults({ rally, isOpen, onClose }: RallyResultsPro
   const handleStageSelect = async (stage: Stage) => {
     setSelectedStage(stage);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/wrc/stages/${stage.id}/results`);
+      const res = await fetch(`/api/wrc/stages/${stage.id}/results`);
       if (res.ok) setStageResults(await res.json());
     } catch (err) {
       console.error('Failed to fetch stage results:', err);
