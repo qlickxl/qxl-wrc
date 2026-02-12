@@ -24,6 +24,9 @@ const DRIVER_PHOTOS: Record<string, string> = {
   'Rovanperä': '/drivers/rovanpera.png',
   'Al-Attiyah': '/drivers/al-attiyah.png',
   'McErlean': '/drivers/mcerlean.png',
+  'Heller': '/drivers/heller.png',
+  'Salvi': '/drivers/salvi.png',
+  'Serderidis': '/drivers/serderidis.png',
 };
 
 function getPhotoUrl(driverName: string): string | null {
