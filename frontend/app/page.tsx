@@ -23,6 +23,40 @@ interface Rally {
   event_id: number;
 }
 
+interface Stage {
+  id: number;
+  stage_number: number;
+  name: string;
+  stage_date: string | null;
+  start_time: string | null;
+  distance_km: number | null;
+  is_power_stage: boolean;
+}
+
+const COUNTRY_TO_TIMEZONE: Record<string, string> = {
+  'Monaco': 'Europe/Monaco', 'Sweden': 'Europe/Stockholm', 'Kenya': 'Africa/Nairobi',
+  'Croatia': 'Europe/Zagreb', 'Spain': 'Atlantic/Canary', 'Portugal': 'Europe/Lisbon',
+  'Italy': 'Europe/Rome', 'Greece': 'Europe/Athens', 'Estonia': 'Europe/Tallinn',
+  'Finland': 'Europe/Helsinki', 'Japan': 'Asia/Tokyo', 'Paraguay': 'America/Asuncion',
+  'Chile': 'America/Santiago', 'Saudi Arabia': 'Asia/Riyadh', 'Czech Republic': 'Europe/Prague',
+  'Mexico': 'America/Mexico_City', 'New Zealand': 'Pacific/Auckland',
+  'Australia': 'Australia/Sydney', 'Argentina': 'America/Buenos_Aires',
+};
+
+function getStageUtcTime(stage: Stage, country: string): Date | null {
+  if (!stage.stage_date || !stage.start_time) return null;
+  const dateStr = stage.stage_date.split('T')[0];
+  const [hh, mm] = stage.start_time.split(':');
+  const rallyTz = COUNTRY_TO_TIMEZONE[country];
+  if (!rallyTz) return null;
+
+  const localDatetime = `${dateStr}T${hh}:${mm}:00`;
+  const utcGuess = new Date(localDatetime + 'Z');
+  const inRallyTz = new Date(utcGuess.toLocaleString('en-US', { timeZone: rallyTz }));
+  const offsetMs = inRallyTz.getTime() - utcGuess.getTime();
+  return new Date(utcGuess.getTime() - offsetMs);
+}
+
 function getSurfaceEmoji(surface: string | null): string {
   if (!surface) return '';
   const s = surface.toLowerCase();
@@ -41,7 +75,8 @@ export default function Home() {
   const [resultsOpen, setResultsOpen] = useState(false);
   const [showNav, setShowNav] = useState(false);
   const [activeSection, setActiveSection] = useState('');
-  const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0, label: '' });
+  const [countdown, setCountdown] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0, label: '', stageLabel: '', heading: 'Next Rally' });
+  const [stagesData, setStagesData] = useState<{ rallyId: number; stages: Stage[] }[]>([]);
 
   // Fetch rally calendar
   useEffect(() => {
@@ -61,26 +96,101 @@ export default function Home() {
     fetchRallies();
   }, []);
 
-  // Countdown to next rally
+  // Fetch stages for active/next rallies (for countdown)
   useEffect(() => {
-    const getNextRally = () => {
+    if (rallies.length === 0) return;
+
+    const now = new Date();
+
+    // Find active rally (currently running)
+    const activeRally = rallies.find((r) => {
+      if (!r.start_date || !r.end_date) return false;
+      const start = new Date(r.start_date);
+      const end = new Date(r.end_date);
+      end.setDate(end.getDate() + 1); // buffer since end_date is just a date
+      return start <= now && now < end;
+    });
+
+    // Find next upcoming rally
+    const nextRally = rallies.find((r) => r.start_date && new Date(r.start_date) > now);
+
+    // Fetch stages for both (deduplicated)
+    const targetRallies = [activeRally, nextRally].filter((r): r is Rally => r != null);
+    const uniqueRallies = targetRallies.filter((r, i) => targetRallies.findIndex((x) => x.id === r.id) === i);
+
+    if (uniqueRallies.length === 0) return;
+
+    const fetchAllStages = async () => {
+      const results = await Promise.all(
+        uniqueRallies.map(async (rally) => {
+          try {
+            const res = await fetch(`/api/wrc/rallies/${rally.id}/stages`);
+            if (res.ok) {
+              const data = await res.json();
+              return { rallyId: rally.id, stages: data as Stage[] };
+            }
+          } catch (err) {
+            console.error('Failed to fetch stages for countdown:', err);
+          }
+          return { rallyId: rally.id, stages: [] as Stage[] };
+        })
+      );
+      setStagesData(results);
+    };
+
+    fetchAllStages();
+  }, [rallies]);
+
+  // Countdown to next stage
+  useEffect(() => {
+    const getCountdownTarget = (): { label: string; stageLabel: string; heading: string; targetTime: number } | null => {
       const now = new Date();
-      return rallies.find((r) => r.start_date && new Date(r.start_date) > now);
+
+      // Search stages data for the next upcoming stage
+      for (const { rallyId, stages } of stagesData) {
+        const rally = rallies.find((r) => r.id === rallyId);
+        if (!rally) continue;
+
+        for (const stage of stages) {
+          const utcTime = getStageUtcTime(stage, rally.country);
+          if (utcTime && utcTime.getTime() > now.getTime()) {
+            const stagePrefix = stage.stage_number === 0 ? 'Shakedown' : `SS${stage.stage_number}`;
+            return {
+              label: rally.name,
+              stageLabel: `${stagePrefix} — ${stage.name}`,
+              heading: 'Next Stage',
+              targetTime: utcTime.getTime(),
+            };
+          }
+        }
+      }
+
+      // Fallback: count down to next rally start date
+      const nextRally = rallies.find((r) => r.start_date && new Date(r.start_date) > now);
+      if (nextRally) {
+        return {
+          label: nextRally.name,
+          stageLabel: '',
+          heading: 'Next Rally',
+          targetTime: new Date(nextRally.start_date).getTime(),
+        };
+      }
+
+      return null;
     };
 
     const updateCountdown = () => {
-      const next = getNextRally();
-      if (!next || !next.start_date) {
-        setCountdown({ days: 0, hours: 0, minutes: 0, seconds: 0, label: 'Season Complete' });
+      const target = getCountdownTarget();
+      if (!target) {
+        setCountdown({ days: 0, hours: 0, minutes: 0, seconds: 0, label: 'Season Complete', stageLabel: '', heading: '' });
         return;
       }
 
       const now = new Date().getTime();
-      const target = new Date(next.start_date).getTime();
-      const diff = target - now;
+      const diff = target.targetTime - now;
 
       if (diff <= 0) {
-        setCountdown({ days: 0, hours: 0, minutes: 0, seconds: 0, label: `${next.name} is underway!` });
+        setCountdown({ days: 0, hours: 0, minutes: 0, seconds: 0, label: target.label, stageLabel: `${target.stageLabel} is underway!`, heading: target.heading });
         return;
       }
 
@@ -89,14 +199,16 @@ export default function Home() {
         hours: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
         minutes: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
         seconds: Math.floor((diff % (1000 * 60)) / 1000),
-        label: next.name,
+        label: target.label,
+        stageLabel: target.stageLabel,
+        heading: target.heading,
       });
     };
 
     updateCountdown();
     const interval = setInterval(updateCountdown, 1000);
     return () => clearInterval(interval);
-  }, [rallies]);
+  }, [rallies, stagesData]);
 
   // Sticky nav on scroll
   useEffect(() => {
@@ -204,8 +316,12 @@ export default function Home() {
               className="mt-8 inline-block"
             >
               <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-6">
-                <p className="text-white/50 text-sm mb-3 uppercase tracking-wider">Next Rally</p>
-                <p className="text-white font-semibold text-xl mb-4">{countdown.label}</p>
+                <p className="text-white/50 text-sm mb-2 uppercase tracking-wider">{countdown.heading || 'Next Rally'}</p>
+                <p className="text-white font-semibold text-xl">{countdown.label}</p>
+                {countdown.stageLabel && (
+                  <p className="text-white/60 text-sm mt-1 mb-3">{countdown.stageLabel}</p>
+                )}
+                {!countdown.stageLabel && <div className="mb-4" />}
                 {(countdown.days > 0 || countdown.hours > 0) && (
                   <div className="flex items-start justify-center" suppressHydrationWarning>
                     {[
