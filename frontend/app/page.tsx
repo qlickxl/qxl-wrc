@@ -333,7 +333,7 @@ export default function Home() {
                       <div key={item.label} className="flex items-start">
                         {i > 0 && <span className="text-wrc-red text-3xl font-bold mx-1 -mt-0.5">:</span>}
                         <div className="text-center">
-                          <div className="text-3xl font-bold text-wrc-blue font-mono" suppressHydrationWarning>
+                          <div className="text-3xl font-bold text-white font-mono" suppressHydrationWarning>
                             {String(item.value).padStart(2, '0')}
                           </div>
                           <div className="text-white/40 text-xs uppercase">{item.label}</div>
