@@ -6,6 +6,7 @@ import { staggerContainer, staggerItem, modalVariants, backdropVariants } from '
 import { RallySpinner } from './LoadingSkeleton';
 import AnimatedFlag from './AnimatedFlag';
 import ManufacturerLogo from './ManufacturerLogo';
+import DriverPhoto from './DriverPhoto';
 
 interface RallyResult {
   position: number | null;
@@ -252,11 +253,11 @@ export default function RallyResults({ rally, isOpen, onClose }: RallyResultsPro
                       }`}>
                         {r.status === 'retired' ? 'RET' : r.position || '-'}
                       </div>
-                      <div className="text-sm text-white/40 w-8">#{r.car_number}</div>
+                      <DriverPhoto name={r.driver_name} size={36} />
                       <div className="flex-1 min-w-0">
-                        <div className="text-white font-semibold text-sm truncate">{r.driver_name}</div>
+                        <div className="text-white font-semibold text-sm truncate">#{r.car_number} {r.driver_name}</div>
                         <div className="text-white/40 text-xs truncate flex items-center gap-1.5">
-                          {r.codriver_name} <span className="text-white/20">•</span> <ManufacturerLogo name={r.manufacturer_name} size={16} />
+                          {r.codriver_name} <span className="text-white/20">•</span> <ManufacturerLogo name={r.manufacturer_name} size={22} />
                         </div>
                       </div>
                       <div className="text-right">
@@ -337,7 +338,7 @@ export default function RallyResults({ rally, isOpen, onClose }: RallyResultsPro
                           </div>
                           <div className="text-white/40 w-8">#{sr.car_number}</div>
                           <div className="flex-1 text-white truncate">{sr.driver_name}</div>
-                          <ManufacturerLogo name={sr.manufacturer_name} size={18} />
+                          <ManufacturerLogo name={sr.manufacturer_name} size={22} />
                           <div className="font-mono text-white text-right w-24">{sr.stage_time || '-'}</div>
                           <div className="font-mono text-white/40 text-right w-24">{sr.gap_first ? `+${sr.gap_first}` : '-'}</div>
                         </div>

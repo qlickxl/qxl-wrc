@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { staggerContainer, staggerItem, modalVariants, backdropVariants } from '@/utils/animations';
 import { StandingsCardSkeleton } from './LoadingSkeleton';
 import ManufacturerLogo from './ManufacturerLogo';
+import DriverPhoto from './DriverPhoto';
 
 interface DriverStanding {
   position: number;
@@ -179,11 +180,12 @@ export default function Standings({ isOpen, onClose }: StandingsProps) {
                       }`}>
                         {d.position}
                       </div>
-                      <div className="text-xl">{getFlag(d.nationality)}</div>
+                      <DriverPhoto name={d.driver_name} size={40} />
                       <div className="flex-1 min-w-0">
                         <div className="text-white font-semibold truncate">{d.driver_name}</div>
                         <div className="flex items-center gap-1.5 mt-0.5">
-                          <ManufacturerLogo name={d.manufacturer} size={18} />
+                          <span className="text-sm">{getFlag(d.nationality)}</span>
+                          <ManufacturerLogo name={d.manufacturer} size={24} />
                         </div>
                       </div>
                       <div className="text-right">
