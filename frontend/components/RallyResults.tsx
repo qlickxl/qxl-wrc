@@ -193,7 +193,7 @@ export default function RallyResults({ rally, isOpen, onClose }: RallyResultsPro
                   <AnimatedFlag country={rally.country} size={32} />
                   {rally.name}
                 </h2>
-                <p className="text-white/50 text-sm mt-1">
+                <p className="text-white/60 text-sm mt-1">
                   {rally.country} {rally.surface && `• ${rally.surface}`}
                   {rally.start_date && ` • ${new Date(rally.start_date).toLocaleDateString()}`}
                 </p>
@@ -249,15 +249,15 @@ export default function RallyResults({ rally, isOpen, onClose }: RallyResultsPro
                         r.position === 1 ? 'text-yellow-400' :
                         r.position === 2 ? 'text-gray-300' :
                         r.position === 3 ? 'text-amber-600' :
-                        r.status === 'retired' ? 'text-red-400' : 'text-white/50'
+                        r.status === 'retired' ? 'text-red-400' : 'text-white/70'
                       }`}>
                         {r.status === 'retired' ? 'RET' : r.position || '-'}
                       </div>
                       <DriverPhoto name={r.driver_name} size={36} />
                       <div className="flex-1 min-w-0">
                         <div className="text-white font-semibold text-sm truncate">#{r.car_number} {r.driver_name}</div>
-                        <div className="text-white/40 text-xs truncate flex items-center gap-1.5">
-                          {r.codriver_name} <span className="text-white/20">•</span> <ManufacturerLogo name={r.manufacturer_name} size={22} />
+                        <div className="text-white/60 text-xs truncate flex items-center gap-1.5">
+                          {r.codriver_name} <span className="text-white/40">•</span> <ManufacturerLogo name={r.manufacturer_name} size={22} />
                         </div>
                       </div>
                       <div className="text-right">
@@ -269,7 +269,7 @@ export default function RallyResults({ rally, isOpen, onClose }: RallyResultsPro
                           <div className="text-red-400 text-xs">{r.retirement_reason}</div>
                         ) : null}
                         {r.points > 0 && (
-                          <div className="text-wrc-blue text-xs font-medium">{r.points} pts</div>
+                          <div className="text-sky-400 text-xs font-medium">{r.points} pts</div>
                         )}
                       </div>
                     </motion.div>
@@ -296,14 +296,14 @@ export default function RallyResults({ rally, isOpen, onClose }: RallyResultsPro
                           {stage.stage_number === 0 ? 'SH' : `SS${stage.stage_number}`}
                           {stage.is_power_stage && ' ⚡'}
                         </div>
-                        <div className="text-xs opacity-60 truncate">{stage.name}</div>
+                        <div className="text-xs opacity-80 truncate">{stage.name}</div>
                         <div className="flex items-center gap-2 mt-1">
                           {stage.distance_km && (
-                            <span className="text-xs opacity-40">{stage.distance_km} km</span>
+                            <span className="text-xs opacity-60">{stage.distance_km} km</span>
                           )}
                         </div>
                         {dt && (
-                          <div className="text-xs opacity-50 mt-1" suppressHydrationWarning>
+                          <div className="text-xs opacity-70 mt-1" suppressHydrationWarning>
                             {dt.date} &middot; {dt.ukTime} UK
                           </div>
                         )}
@@ -332,15 +332,15 @@ export default function RallyResults({ rally, isOpen, onClose }: RallyResultsPro
                           <div className={`font-bold w-8 text-center ${
                             sr.stage_position === 1 ? 'text-yellow-400' :
                             sr.stage_position === 2 ? 'text-gray-300' :
-                            sr.stage_position === 3 ? 'text-amber-600' : 'text-white/50'
+                            sr.stage_position === 3 ? 'text-amber-600' : 'text-white/70'
                           }`}>
                             {sr.stage_position}
                           </div>
-                          <div className="text-white/40 w-8">#{sr.car_number}</div>
+                          <div className="text-white/60 w-8">#{sr.car_number}</div>
                           <div className="flex-1 text-white truncate">{sr.driver_name}</div>
                           <ManufacturerLogo name={sr.manufacturer_name} size={22} />
                           <div className="font-mono text-white text-right w-24">{sr.stage_time || '-'}</div>
-                          <div className="font-mono text-white/40 text-right w-24">{sr.gap_first ? `+${sr.gap_first}` : '-'}</div>
+                          <div className="font-mono text-white/60 text-right w-24">{sr.gap_first ? `+${sr.gap_first}` : '-'}</div>
                         </div>
                       ))}
                     </div>

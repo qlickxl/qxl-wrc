@@ -300,11 +300,11 @@ export default function Home() {
             <div className="flex items-center justify-center gap-4 mb-2">
               <img src="/wrc-car-logo.svg" alt="WRC Rally Car" className="h-16 md:h-20 w-auto" />
               <h1 className="text-5xl md:text-7xl font-extrabold text-white tracking-tight">
-                AWagi <span className="text-wrc-blue">WRC</span>
+                AWagi <span className="text-sky-400">WRC</span>
               </h1>
             </div>
             <div className="w-24 h-1 bg-wrc-blue mx-auto rounded-full" />
-            <p className="text-white/50 text-lg mt-3">World Rally Championship Analytics</p>
+            <p className="text-white/60 text-lg mt-3">World Rally Championship Analytics</p>
           </motion.div>
 
           {/* Countdown */}
@@ -316,7 +316,7 @@ export default function Home() {
               className="mt-8 inline-block"
             >
               <div className="bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl p-6">
-                <p className="text-white/50 text-sm mb-2 uppercase tracking-wider">{countdown.heading || 'Next Rally'}</p>
+                <p className="text-white/60 text-sm mb-2 uppercase tracking-wider">{countdown.heading || 'Next Rally'}</p>
                 <p className="text-white font-semibold text-xl">{countdown.label}</p>
                 {countdown.stageLabel && (
                   <p className="text-white/60 text-sm mt-1 mb-3">{countdown.stageLabel}</p>
@@ -336,7 +336,7 @@ export default function Home() {
                           <div className="text-3xl font-bold text-white font-mono" suppressHydrationWarning>
                             {String(item.value).padStart(2, '0')}
                           </div>
-                          <div className="text-white/40 text-xs uppercase">{item.label}</div>
+                          <div className="text-white/60 text-xs uppercase">{item.label}</div>
                         </div>
                       </div>
                     ))}
@@ -416,12 +416,12 @@ export default function Home() {
                         }`}
                       >
                         <div className="flex items-start justify-between mb-2">
-                          <span className="text-white/40 text-sm font-mono">R{rally.round}</span>
+                          <span className="text-white/60 text-sm font-mono">R{rally.round}</span>
                           <AnimatedFlag country={rally.country} size={36} />
                         </div>
                         <h3 className="text-white font-bold text-lg">{rally.name}</h3>
-                        <p className="text-white/50 text-sm mt-1">{rally.country}</p>
-                        <div className="flex items-center gap-2 mt-3 text-xs text-white/40">
+                        <p className="text-white/60 text-sm mt-1">{rally.country}</p>
+                        <div className="flex items-center gap-2 mt-3 text-xs text-white/60">
                           {rally.start_date && (
                             <span>{new Date(rally.start_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>
                           )}
@@ -436,7 +436,7 @@ export default function Home() {
                           <span className={`text-xs px-2 py-1 rounded-full ${
                             isPast
                               ? 'bg-green-500/20 text-green-400'
-                              : 'bg-wrc-blue/20 text-wrc-blue'
+                              : 'bg-sky-400/20 text-sky-400'
                           }`}>
                             {isPast ? 'Completed' : 'Upcoming'}
                           </span>
@@ -477,12 +477,12 @@ export default function Home() {
                       <AnimatedFlag country={rally.country} size={32} />
                       <div className="flex-1 min-w-0">
                         <div className="text-white font-semibold">{rally.name}</div>
-                        <div className="text-white/40 text-sm">
+                        <div className="text-white/60 text-sm">
                           Round {rally.round} • {rally.country}
                           {rally.surface && ` • ${rally.surface}`}
                         </div>
                       </div>
-                      <div className="text-right text-white/50 text-sm" suppressHydrationWarning>
+                      <div className="text-right text-white/60 text-sm" suppressHydrationWarning>
                         {rally.start_date && new Date(rally.start_date).toLocaleDateString('en-GB', {
                           day: 'numeric', month: 'short', year: 'numeric',
                         })}
@@ -522,7 +522,7 @@ export default function Home() {
                       <AnimatedFlag country={rally.country} size={32} />
                       <div className="flex-1 min-w-0">
                         <div className="text-white font-semibold">{rally.name}</div>
-                        <div className="text-white/40 text-sm">
+                        <div className="text-white/60 text-sm">
                           Round {rally.round} • {rally.country}
                         </div>
                       </div>
@@ -542,8 +542,8 @@ export default function Home() {
 
       {/* Footer */}
       <footer className="border-t border-white/10 py-8 px-4">
-        <div className="max-w-7xl mx-auto text-center text-white/30 text-sm">
-          <p className="font-semibold text-white/50 mb-1">AWagi WRC</p>
+        <div className="max-w-7xl mx-auto text-center text-white/50 text-sm">
+          <p className="font-semibold text-white/60 mb-1">AWagi WRC</p>
           <p>&copy; {new Date().getFullYear()} AWagi WRC Rally Analytics &bull; Data from eWRC</p>
         </div>
       </footer>

@@ -176,7 +176,7 @@ export default function Standings({ isOpen, onClose }: StandingsProps) {
                       <div className={`text-2xl font-bold w-10 text-center ${
                         d.position === 1 ? 'text-yellow-400' :
                         d.position === 2 ? 'text-gray-300' :
-                        d.position === 3 ? 'text-amber-600' : 'text-white/50'
+                        d.position === 3 ? 'text-amber-600' : 'text-white/70'
                       }`}>
                         {d.position}
                       </div>
@@ -189,8 +189,8 @@ export default function Standings({ isOpen, onClose }: StandingsProps) {
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-wrc-blue font-bold text-lg">{d.points}</div>
-                        <div className="text-white/40 text-xs">
+                        <div className="text-sky-400 font-bold text-lg">{d.points}</div>
+                        <div className="text-white/60 text-xs">
                           {d.wins > 0 && `${d.wins}W `}
                           {d.podiums > 0 && `${d.podiums}P`}
                         </div>
@@ -218,7 +218,7 @@ export default function Standings({ isOpen, onClose }: StandingsProps) {
                       <div className={`text-2xl font-bold w-10 text-center ${
                         m.position === 1 ? 'text-yellow-400' :
                         m.position === 2 ? 'text-gray-300' :
-                        m.position === 3 ? 'text-amber-600' : 'text-white/50'
+                        m.position === 3 ? 'text-amber-600' : 'text-white/70'
                       }`}>
                         {m.position}
                       </div>
@@ -228,8 +228,8 @@ export default function Standings({ isOpen, onClose }: StandingsProps) {
                         <div className="text-white font-semibold truncate">{m.manufacturer_name}</div>
                       </div>
                       <div className="text-right">
-                        <div className="text-wrc-blue font-bold text-lg">{m.points}</div>
-                        <div className="text-white/40 text-xs">
+                        <div className="text-sky-400 font-bold text-lg">{m.points}</div>
+                        <div className="text-white/60 text-xs">
                           {m.wins > 0 && `${m.wins} wins`}
                         </div>
                       </div>
