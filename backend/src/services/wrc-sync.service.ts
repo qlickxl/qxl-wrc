@@ -1,50 +1,18 @@
 import pool from '../config/database';
 import { wrcApiService } from './wrc-api.service';
+import { ResultsScraperService } from './results-scraper.service';
 
 export class WrcSyncService {
   /**
-   * Sync rally calendar for the active season
+   * Sync rally calendar for the active season.
+   *
+   * Delegates to the eWRC scraper — the documented api.wrc.com calendar feed is
+   * unreachable from production, so eWRC is the authoritative source for dates,
+   * country and surface.
    */
   static async syncCalendar(season?: number): Promise<{ upserted: number }> {
-    const events = await wrcApiService.getActiveSeason();
-    if (!events.length) {
-      throw new Error('No rally events returned from WRC API');
-    }
-
-    let upserted = 0;
-    for (const event of events) {
-      const eventSeason = season || new Date(event.startDate || event.date).getFullYear();
-      const round = event.round || event.order || (upserted + 1);
-      const name = event.name || event.eventName || 'Unknown Rally';
-      const officialName = event.officialName || event.fullName || name;
-      const country = event.country?.name || event.countryName || null;
-      const surface = event.surface || null;
-      const startDate = event.startDate || event.date || null;
-      const endDate = event.endDate || null;
-      const totalStages = event.totalStages || null;
-      const status = event.status || (startDate && new Date(startDate) < new Date() ? 'completed' : 'upcoming');
-      const eventId = event.id || event.eventId || null;
-
-      await pool.query(
-        `INSERT INTO wrc_rallies (season, round, name, official_name, country, surface, start_date, end_date, total_stages, status, event_id)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-         ON CONFLICT (season, round) DO UPDATE SET
-           name = COALESCE(EXCLUDED.name, wrc_rallies.name),
-           official_name = COALESCE(EXCLUDED.official_name, wrc_rallies.official_name),
-           country = COALESCE(EXCLUDED.country, wrc_rallies.country),
-           surface = COALESCE(EXCLUDED.surface, wrc_rallies.surface),
-           start_date = COALESCE(EXCLUDED.start_date, wrc_rallies.start_date),
-           end_date = COALESCE(EXCLUDED.end_date, wrc_rallies.end_date),
-           total_stages = COALESCE(EXCLUDED.total_stages, wrc_rallies.total_stages),
-           status = COALESCE(EXCLUDED.status, wrc_rallies.status),
-           event_id = COALESCE(EXCLUDED.event_id, wrc_rallies.event_id),
-           updated_at = CURRENT_TIMESTAMP`,
-        [eventSeason, round, name, officialName, country, surface, startDate, endDate, totalStages, status, eventId]
-      );
-      upserted++;
-    }
-
-    console.log(`[wrc-sync] syncCalendar: ${upserted} rallies upserted`);
+    const { upserted } = await ResultsScraperService.scrapeCalendar(season);
+    console.log(`[wrc-sync] syncCalendar: ${upserted} rallies upserted (eWRC)`);
     return { upserted };
   }
 

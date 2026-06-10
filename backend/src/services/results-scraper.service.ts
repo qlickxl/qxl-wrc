@@ -162,6 +162,25 @@ function extractShakedown(decoded: string): EwrcShakedown | null {
   return null;
 }
 
+// Generic brace-matched object extractor: pulls the JSON object that follows
+// `"key":{` out of a decoded RSC payload (handles nested braces).
+function extractObject(decoded: string, key: string): any | null {
+  const marker = `"${key}":{`;
+  const idx = decoded.indexOf(marker);
+  if (idx < 0) return null;
+  const start = idx + `"${key}":`.length;
+  let depth = 0;
+  for (let i = start; i < decoded.length; i++) {
+    if (decoded[i] === '{') depth++;
+    else if (decoded[i] === '}') depth--;
+    if (depth === 0) {
+      try { return JSON.parse(decoded.slice(start, i + 1)); }
+      catch { return null; }
+    }
+  }
+  return null;
+}
+
 async function fetchPage(path: string): Promise<string> {
   const url = `${EWRC_BASE}${path}`;
   const { data } = await axios.get<string>(url, {
@@ -515,23 +534,83 @@ export class ResultsScraperService {
   }
 
   /**
-   * Scrape calendar only (for upcoming rallies without results)
+   * Sync the rally calendar from eWRC — dates, country, surface, official name
+   * for every event in the season, including future events with no stages yet.
+   * Replaces the defunct api.wrc.com calendar source.
    */
-  static async scrapeCalendar(season: number): Promise<{ upserted: number }> {
+  static async scrapeCalendar(season = new Date().getFullYear()): Promise<{
+    upserted: number; errors: { rally: string; error: string }[];
+  }> {
     const events = EWRC_EVENTS[season];
     if (!events) throw new Error(`No eWRC event data for season ${season}`);
 
     let upserted = 0;
+    const errors: { rally: string; error: string }[] = [];
+
     for (const event of events) {
-      await pool.query(
-        `INSERT INTO wrc_rallies (season, round, name, status)
-         VALUES ($1, $2, $3, 'upcoming')
-         ON CONFLICT (season, round) DO NOTHING`,
-        [season, event.round, event.name]
-      );
-      upserted++;
+      try {
+        // The event header (dates/country/surface) lives on the results page
+        // and is present even before stages/results are published.
+        const html = await fetchPage(`/results/${event.ewrcId}-${event.slug}/`);
+        const payloads = decodeRSCPayloads(html);
+
+        let detail: EwrcEventDetail | undefined;
+        for (const decoded of payloads) {
+          const obj = extractObject(decoded, 'event');
+          if (obj?.from_date) { detail = obj; break; }
+        }
+
+        if (!detail) {
+          console.log(`[results-scraper] calendar ${event.name}: no event detail found`);
+          errors.push({ rally: event.name, error: 'no event detail found' });
+          continue;
+        }
+
+        await this.upsertCalendarEntry(event, detail, season);
+        upserted++;
+        console.log(`[results-scraper] calendar ${event.name}: ${detail.from_date} → ${detail.until_date}`);
+        await new Promise(r => setTimeout(r, 500));
+      } catch (err: any) {
+        console.warn(`[results-scraper] calendar ${event.name} failed: ${err.message}`);
+        errors.push({ rally: event.name, error: err.message });
+      }
     }
-    return { upserted };
+
+    console.log(`[results-scraper] scrapeCalendar: ${upserted}/${events.length} rallies upserted`);
+    return { upserted, errors };
+  }
+
+  /**
+   * Upsert a single calendar entry from eWRC event detail. Refreshes dates and
+   * metadata; derives status from the end date but never downgrades a rally that
+   * the results scraper has already confirmed 'completed'.
+   */
+  private static async upsertCalendarEntry(
+    eventInfo: EwrcEventConfig,
+    detail: EwrcEventDetail,
+    season: number
+  ): Promise<void> {
+    const country = detail.country?.name?.en || null;
+    const surface = detail.surface?.en || null;
+    const startDate = detail.from_date || null;
+    const endDate = detail.until_date || null;
+    const officialName = detail.name || eventInfo.name;
+    const today = new Date().toISOString().slice(0, 10);
+    const dateStatus = endDate && endDate < today ? 'completed' : 'upcoming';
+
+    await pool.query(
+      `INSERT INTO wrc_rallies (season, round, name, official_name, country, surface, start_date, end_date, status)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+       ON CONFLICT (season, round) DO UPDATE SET
+         official_name = COALESCE(EXCLUDED.official_name, wrc_rallies.official_name),
+         country = COALESCE(EXCLUDED.country, wrc_rallies.country),
+         surface = COALESCE(EXCLUDED.surface, wrc_rallies.surface),
+         start_date = COALESCE(EXCLUDED.start_date, wrc_rallies.start_date),
+         end_date = COALESCE(EXCLUDED.end_date, wrc_rallies.end_date),
+         status = CASE WHEN wrc_rallies.status = 'completed' THEN 'completed' ELSE EXCLUDED.status END,
+         updated_at = CURRENT_TIMESTAMP`,
+      [season, eventInfo.round, eventInfo.name, officialName, country, surface, startDate, endDate, dateStatus]
+    );
   }
 
   // ---------- DB upsert helpers ----------
