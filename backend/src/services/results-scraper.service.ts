@@ -208,7 +208,7 @@ export class ResultsScraperService {
   /**
    * Scrape results + stages + stage times for a single rally
    */
-  static async scrapeRally(round: number, season = 2025): Promise<{
+  static async scrapeRally(round: number, season = new Date().getFullYear()): Promise<{
     rally: string; crews: number; results: number; stages: number; stageResults: number;
   }> {
     const events = EWRC_EVENTS[season];
@@ -406,7 +406,7 @@ export class ResultsScraperService {
   /**
    * Scrape all completed rallies for a season
    */
-  static async scrapeAllRallies(season = 2025): Promise<{
+  static async scrapeAllRallies(season = new Date().getFullYear()): Promise<{
     synced: { rally: string; crews: number; results: number; stages: number; stageResults: number }[];
     errors: { rally: string; error: string }[];
   }> {
